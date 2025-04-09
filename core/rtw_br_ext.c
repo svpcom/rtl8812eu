@@ -107,7 +107,7 @@ static __inline__ int __nat25_add_pppoe_tag(struct sk_buff *skb, struct pppoe_ta
 	struct pppoe_hdr *ph = (struct pppoe_hdr *)(skb->data + ETH_HLEN);
 	int data_len;
 
-	data_len = tag->tag_len + TAG_HDR_LEN;
+	data_len = ntohs(tag->tag_len) + TAG_HDR_LEN;
 	if (skb_tailroom(skb) < data_len) {
 		_DEBUG_ERR("skb_tailroom() failed in add SID tag!\n");
 		return -1;
@@ -117,6 +117,9 @@ static __inline__ int __nat25_add_pppoe_tag(struct sk_buff *skb, struct pppoe_ta
 	/* have a room for new tag */
 	memmove(((unsigned char *)ph->tag + data_len), (unsigned char *)ph->tag, ntohs(ph->length));
 	ph->length = htons(ntohs(ph->length) + data_len);
+	if (data_len > sizeof(ph->tag)) {
+		data_len = sizeof(ph->tag);
+	}
 	memcpy((unsigned char *)ph->tag, tag, data_len);
 	return data_len;
 }
@@ -680,14 +683,8 @@ void nat25_db_expire(_adapter *priv)
 							     f->networkAddr[6],
 							     f->networkAddr[7],
 							     f->networkAddr[8],
-							     f->networkAddr[9],
-							     f->networkAddr[10],
-							     f->networkAddr[11],
-							     f->networkAddr[12],
-							     f->networkAddr[13],
-							     f->networkAddr[14],
-							     f->networkAddr[15],
-							f->networkAddr[16]);
+							f->networkAddr[9],
+							f->networkAddr[10]);
 #else
 
 						panic_printk("NAT25 Expire H(%02d) M:%02x%02x%02x%02x%02x%02x N:%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
@@ -707,7 +704,7 @@ void nat25_db_expire(_adapter *priv)
 							     f->networkAddr[6],
 							     f->networkAddr[7],
 							     f->networkAddr[8],
-							     f->networkAddr[9],
+							f->networkAddr[9],
 							f->networkAddr[10]);
 #endif
 #endif
